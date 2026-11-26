@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { isAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
 import { addMessage, logout, setKeychainStatus, setMessageActive } from "./actions";
+import { AutoRefresh } from "./auto-refresh";
 import { LoginForm } from "./login-form";
 
 // Rendered per request: reads cookies / records a scan.
@@ -71,9 +72,12 @@ export default async function AdminPage() {
     <div className="admin">
       <header>
         <h1>Yönetim</h1>
-        <form action={logout}>
-          <button className="secondary">Çıkış</button>
-        </form>
+        <div className="header-actions">
+          <AutoRefresh />
+          <form action={logout}>
+            <button className="secondary">Çıkış</button>
+          </form>
+        </div>
       </header>
 
       <section>
