@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { isAdmin } from "@/lib/admin-auth";
 import { db } from "@/lib/db";
-import { addMessage, logout, setKeychainStatus, setMessageActive } from "./actions";
-import { AutoRefresh } from "./auto-refresh";
 import { LoginForm } from "./login-form";
+import { AdminShell, ScansTable, fmt, type ScanRow } from "./ui";
 
-// Rendered per request: reads cookies / records a scan.
+// Rendered per request: reads cookies.
 export const instant = false;
 
 export const metadata: Metadata = { title: "Yönetim", robots: { index: false, follow: false } };
@@ -23,39 +23,25 @@ type Stats = {
   feedback_total: number;
 };
 
-type KeychainRow = {
-  id: number;
-  label: string;
-  status: "generated" | "active" | "disabled";
-  scans: number;
-  last_scan: string | null;
-};
-
-type MessageRow = { id: number; text: string; author: string | null; active: boolean };
-type FeedbackRow = { id: number; message: string; created_at: string; keychains: { label: string } | null };
-
-const fmt = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "—";
+type FeedbackRow = { id: number; message: string; created_at: string; keychain_id: number | null; keychains: { label: string } | null };
 
 export default async function AdminPage() {
   if (!(await isAdmin())) return <LoginForm />;
   const client = db();
 
-  const [stats, keychains, messages, feedback] = await Promise.all([
+  const [stats, scans, feedback] = await Promise.all([
     client.rpc("admin_stats"),
-    client.rpc("admin_keychains"),
-    client.from("messages").select("id, text, author, active").order("id"),
+    client.rpc("admin_scans", { p_limit: 20 }),
     client
       .from("feedback")
-      .select("id, message, created_at, keychains(label)")
+      .select("id, message, created_at, keychain_id, keychains(label)")
       .order("created_at", { ascending: false })
-      .limit(100),
+      .limit(20),
   ]);
-  for (const r of [stats, keychains, messages, feedback]) if (r.error) throw r.error;
+  for (const r of [stats, scans, feedback]) if (r.error) throw r.error;
 
   const s = stats.data as Stats;
   const repeatRate = s.scanned_keychains ? Math.round((s.repeat_keychains / s.scanned_keychains) * 100) : 0;
-
   const statItems: [string, string | number][] = [
     ["Toplam anahtarlık", s.keychains_total],
     ["Aktif (okutulmuş)", s.keychains_active],
@@ -67,21 +53,11 @@ export default async function AdminPage() {
     ["Aktif mesaj", s.messages_active],
     ["Geri bildirim", s.feedback_total],
   ];
+  const feedbackRows = feedback.data as unknown as FeedbackRow[];
 
   return (
-    <div className="admin">
-      <header>
-        <h1>Yönetim</h1>
-        <div className="header-actions">
-          <AutoRefresh />
-          <form action={logout}>
-            <button className="secondary">Çıkış</button>
-          </form>
-        </div>
-      </header>
-
+    <AdminShell active="overview" title="Özet" autoRefresh>
       <section>
-        <h2>İstatistikler</h2>
         <div className="stats">
           {statItems.map(([label, value]) => (
             <div className="stat" key={label}>
@@ -93,8 +69,16 @@ export default async function AdminPage() {
       </section>
 
       <section>
-        <h2>Geri bildirimler</h2>
-        {(feedback.data as unknown as FeedbackRow[]).length === 0 ? (
+        <div className="section-head">
+          <h2>Son okutmalar</h2>
+          <Link href="/admin/scans">Tümü →</Link>
+        </div>
+        <ScansTable rows={scans.data as ScanRow[]} />
+      </section>
+
+      <section>
+        <h2>Son geri bildirimler</h2>
+        {feedbackRows.length === 0 ? (
           <p className="muted">Henüz geri bildirim yok.</p>
         ) : (
           <table>
@@ -102,10 +86,12 @@ export default async function AdminPage() {
               <tr><th>Tarih</th><th>Anahtarlık</th><th>Mesaj</th></tr>
             </thead>
             <tbody>
-              {(feedback.data as unknown as FeedbackRow[]).map((f) => (
+              {feedbackRows.map((f) => (
                 <tr key={f.id}>
-                  <td>{fmt(f.created_at)}</td>
-                  <td>{f.keychains?.label ?? "—"}</td>
+                  <td className="nowrap">{fmt(f.created_at)}</td>
+                  <td className="nowrap">
+                    {f.keychain_id && f.keychains ? <Link href={`/admin/keychains/${f.keychain_id}`}>{f.keychains.label}</Link> : "—"}
+                  </td>
                   <td>{f.message}</td>
                 </tr>
               ))}
@@ -113,62 +99,6 @@ export default async function AdminPage() {
           </table>
         )}
       </section>
-
-      <section>
-        <h2>Mesajlar</h2>
-        <table>
-          <thead>
-            <tr><th>#</th><th>Mesaj</th><th>Yazar</th><th>Durum</th></tr>
-          </thead>
-          <tbody>
-            {(messages.data as MessageRow[]).map((m) => (
-              <tr key={m.id}>
-                <td>{m.id}</td>
-                <td>{m.text}</td>
-                <td>{m.author ?? "—"}</td>
-                <td>
-                  <form action={setMessageActive}>
-                    <input type="hidden" name="id" value={m.id} />
-                    <input type="hidden" name="active" value={String(!m.active)} />
-                    <button className="secondary">{m.active ? "Aktif ✓" : "Pasif"}</button>
-                  </form>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <form action={addMessage} className="inline-form">
-          <input type="text" name="text" placeholder="Yeni mesaj" maxLength={500} required />
-          <input type="text" name="author" placeholder="Yazar (opsiyonel)" maxLength={100} />
-          <button>Ekle</button>
-        </form>
-      </section>
-
-      <section>
-        <h2>Anahtarlıklar</h2>
-        <table>
-          <thead>
-            <tr><th>Etiket</th><th>Durum</th><th>Okutma</th><th>Son okutma</th><th></th></tr>
-          </thead>
-          <tbody>
-            {(keychains.data as KeychainRow[]).map((k) => (
-              <tr key={k.id}>
-                <td>{k.label}</td>
-                <td>{k.status}</td>
-                <td>{k.scans}</td>
-                <td>{fmt(k.last_scan)}</td>
-                <td>
-                  <form action={setKeychainStatus}>
-                    <input type="hidden" name="id" value={k.id} />
-                    <input type="hidden" name="status" value={k.status === "disabled" ? "active" : "disabled"} />
-                    <button className="secondary">{k.status === "disabled" ? "Etkinleştir" : "Devre dışı bırak"}</button>
-                  </form>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
-    </div>
+    </AdminShell>
   );
 }

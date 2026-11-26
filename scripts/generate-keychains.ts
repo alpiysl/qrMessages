@@ -1,4 +1,5 @@
-// Generates N keychains: random tokens (only hashes go to DB), QR images and a CSV for print.
+// Generates N keychains as one batch: token hash + encrypted token (QR_TOKEN_KEY) go to DB, QR images and a CSV for print.
+// Use the same QR_TOKEN_KEY as the deployed app, otherwise the admin page cannot re-print these QR codes.
 // Usage: npm run qr:generate -- --count 100 [--base-url https://example.com]
 import { config } from "dotenv";
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -6,7 +7,7 @@ import { join } from "node:path";
 import { parseArgs } from "node:util";
 import { createClient } from "@supabase/supabase-js";
 import QRCode from "qrcode";
-import { generateToken, hashToken } from "../src/lib/token";
+import { createKeychains } from "../src/lib/keychain-factory";
 
 config({ path: ".env.local", quiet: true });
 
@@ -27,30 +28,13 @@ const supabase = createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SE
   auth: { persistSession: false },
 });
 
-async function nextNumber(prefix: string): Promise<number> {
-  const { data, error } = await supabase
-    .from("keychains")
-    .select("label")
-    .like("label", `${prefix}-%`)
-    .order("label", { ascending: false })
-    .limit(1);
-  if (error) throw error;
-  return data.length ? Number(data[0].label.split("-").pop()) + 1 : 1;
-}
-
 async function main() {
-  const prefix = values.prefix!;
-  const start = await nextNumber(prefix);
-  const rows = Array.from({ length: count }, (_, i) => {
-    const token = generateToken();
-    const label = `${prefix}-${String(start + i).padStart(5, "0")}`;
-    return { label, token, url: `${baseUrl}/q/${token}` };
+  const { keychains: rows } = await createKeychains(supabase, {
+    count,
+    prefix: values.prefix!,
+    baseUrl,
+    maxCount: 10000,
   });
-
-  const { error } = await supabase
-    .from("keychains")
-    .insert(rows.map((r) => ({ label: r.label, token_hash: hashToken(r.token) })));
-  if (error) throw error;
 
   const batch = new Date().toISOString().replace(/[:.]/g, "-");
   const dir = join("qr-output", batch);

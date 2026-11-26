@@ -12,11 +12,13 @@
     "db:stop": "supabase stop",
     "db:reset": "supabase db reset",
     "qr:generate": "tsx scripts/generate-keychains.ts",
-    "qr:verify": "tsx scripts/verify-qr.ts"
+    "qr:verify": "tsx scripts/verify-qr.ts",
+    "qr:import-tokens": "tsx scripts/import-tokens.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.119.2",
     "next": "16.4.6",
+    "pdf-lib": "^1.17.1",
     "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",

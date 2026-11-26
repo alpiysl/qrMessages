@@ -1,6 +1,7 @@
 import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 
 const COOKIE = "admin_session";
 const MAX_AGE_SECONDS = 60 * 60 * 8;
@@ -29,6 +30,7 @@ export function checkPassword(input: string): boolean {
 }
 
 export async function createSession(): Promise<void> {
+  await connection();
   const exp = Math.floor(Date.now() / 1000) + MAX_AGE_SECONDS;
   const store = await cookies();
   store.set(COOKIE, `${exp}.${sign(`session:${exp}`)}`, {
@@ -46,6 +48,7 @@ export async function destroySession(): Promise<void> {
 }
 
 export async function isAdmin(): Promise<boolean> {
+  await connection();
   const value = (await cookies()).get(COOKIE)?.value;
   if (!value) return false;
   const [exp, sig] = value.split(".");
