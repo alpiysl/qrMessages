@@ -13,7 +13,8 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="tr">
+    // Browser extensions inject attributes on <html> (e.g. __gcrremoteframetoken).
+    <html lang="tr" suppressHydrationWarning>
       <body>{children}</body>
     </html>
   );
