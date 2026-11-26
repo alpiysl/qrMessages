@@ -32,7 +32,7 @@ export default async function QrPage({ params }: PageProps<"/q/[token]">) {
   if (BOT_UA.test(ua)) {
     return (
       <main className="card">
-        <h1>Sürpriz mesajın seni bekliyor</h1>
+        <h1>Bir mesajın var</h1>
         <p className="hint">Mesajını görmek için QR kodu telefonunla okut.</p>
       </main>
     );
@@ -54,17 +54,18 @@ export default async function QrPage({ params }: PageProps<"/q/[token]">) {
   }
 
   return (
-    <main className="card">
-      <p className="eyebrow">Sürpriz mesajın</p>
-      <blockquote className="quote">
-        <p>“{result.message_text}”</p>
-        {result.author && <footer>— {result.author}</footer>}
-      </blockquote>
-      {result.is_new_round && (
-        <p className="hint">Tüm mesajları gördün; şimdi yeni bir tura başladın.</p>
-      )}
-      <p className="hint">Bir sonraki okutmanda yeni bir mesaj seni bekliyor.</p>
+    <div className="qr-page">
+      <main className="card">
+        <blockquote className="quote">
+          <p>“{result.message_text}”</p>
+          {result.author && <footer>— {result.author}</footer>}
+        </blockquote>
+        {result.is_new_round && (
+          <p className="hint">Tüm mesajları gördün; şimdi yeni bir tura başladın.</p>
+        )}
+        <p className="hint">Bir sonraki okutmanda yeni bir mesaj seni bekliyor.</p>
+      </main>
       <FeedbackForm token={token} />
-    </main>
+    </div>
   );
 }
