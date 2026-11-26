@@ -22,7 +22,7 @@ export default async function ScansPage({ searchParams }: PageProps<"/admin/scan
   const rows = data as ScanRow[];
 
   return (
-    <AdminShell active="scans" title="Okutmalar" autoRefresh>
+    <AdminShell title="Okutmalar" autoRefresh>
       <section>
         <form className="filters">
           <input type="text" name="q" defaultValue={q} placeholder="Etiket, mesaj veya yazar ara" />

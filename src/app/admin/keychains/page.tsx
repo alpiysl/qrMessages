@@ -36,7 +36,7 @@ export default async function KeychainsPage({ searchParams }: PageProps<"/admin/
   const rows = list.data as KeychainRow[];
 
   return (
-    <AdminShell active="keychains" title="Anahtarlıklar">
+    <AdminShell title="Anahtarlıklar">
       <section>
         <form className="filters">
           <input type="text" name="q" defaultValue={q} placeholder="Etiket ara (ör. KC-0001)" />

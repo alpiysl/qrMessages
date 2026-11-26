@@ -56,7 +56,7 @@ export default async function AdminPage() {
   const feedbackRows = feedback.data as unknown as FeedbackRow[];
 
   return (
-    <AdminShell active="overview" title="Özet" autoRefresh>
+    <AdminShell title="Özet" autoRefresh>
       <section>
         <div className="stats">
           {statItems.map(([label, value]) => (

@@ -2,18 +2,9 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { logout } from "./actions";
 import { AutoRefresh } from "./auto-refresh";
+import { AdminNav, NavLink } from "./nav-link";
 
 export const PAGE_SIZE = 50;
-
-const NAV = [
-  { href: "/admin", key: "overview", label: "Özet" },
-  { href: "/admin/scans", key: "scans", label: "Okutmalar" },
-  { href: "/admin/keychains", key: "keychains", label: "Anahtarlıklar" },
-  { href: "/admin/messages", key: "messages", label: "Mesajlar" },
-  { href: "/admin/qr", key: "qr", label: "QR Üret" },
-] as const;
-
-export type NavKey = (typeof NAV)[number]["key"];
 
 export const STATUS_LABEL = { generated: "Üretildi", active: "Aktif", disabled: "Devre dışı" } as const;
 export type KeychainStatus = keyof typeof STATUS_LABEL;
@@ -22,17 +13,11 @@ export const fmt = (iso: string | null | undefined) =>
   iso ? new Date(iso).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" }) : "—";
 
 // Admin page frame: top navigation, optional auto refresh. Pages check isAdmin() themselves before querying.
-export function AdminShell(props: { active: NavKey; title: string; autoRefresh?: boolean; children: ReactNode }) {
+export function AdminShell(props: { title: string; autoRefresh?: boolean; children: ReactNode }) {
   return (
     <div className="admin">
       <header>
-        <nav className="admin-nav">
-          {NAV.map((n) => (
-            <Link key={n.key} href={n.href} className={n.key === props.active ? "active" : undefined}>
-              {n.label}
-            </Link>
-          ))}
-        </nav>
+        <AdminNav />
         <div className="header-actions">
           {props.autoRefresh && <AutoRefresh />}
           <form action={logout}>
@@ -58,11 +43,11 @@ export function Pager(props: { path: string; params: Record<string, string | und
   };
   return (
     <div className="pager">
-      {props.page > 1 ? <Link href={href(props.page - 1)}>← Önceki</Link> : <span className="muted">← Önceki</span>}
+      {props.page > 1 ? <NavLink href={href(props.page - 1)}>← Önceki</NavLink> : <span className="muted">← Önceki</span>}
       <span className="muted">
         Sayfa {props.page} / {pages} · {props.total} kayıt
       </span>
-      {props.page < pages ? <Link href={href(props.page + 1)}>Sonraki →</Link> : <span className="muted">Sonraki →</span>}
+      {props.page < pages ? <NavLink href={href(props.page + 1)}>Sonraki →</NavLink> : <span className="muted">Sonraki →</span>}
     </div>
   );
 }

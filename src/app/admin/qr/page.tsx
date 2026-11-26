@@ -31,7 +31,7 @@ export default async function QrPage() {
   const batches = data as BatchRow[];
 
   return (
-    <AdminShell active="qr" title="QR Üret">
+    <AdminShell title="QR Üret">
       <section>
         {hasTokenKey() ? <CreateForm /> : <p className="error">QR_TOKEN_KEY tanımlı değil. Vercel env&apos;e ekleyip redeploy et.</p>}
       </section>

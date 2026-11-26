@@ -34,7 +34,7 @@ export default async function KeychainPage({ params, searchParams }: PageProps<"
   const total = rows[0]?.total ?? 0;
 
   return (
-    <AdminShell active="keychains" title={k.label} autoRefresh>
+    <AdminShell title={k.label} autoRefresh>
       <section>
         <dl className="facts">
           <div><dt>Durum</dt><dd>{STATUS_LABEL[k.status as keyof typeof STATUS_LABEL]}</dd></div>

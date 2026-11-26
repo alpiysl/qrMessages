@@ -29,7 +29,7 @@ export default async function MessagesPage({ searchParams }: PageProps<"/admin/m
   const rows = data as MessageRow[];
 
   return (
-    <AdminShell active="messages" title="Mesajlar">
+    <AdminShell title="Mesajlar">
       <section>
         <h2>Yeni mesaj</h2>
         <form action={addMessage} className="inline-form">
