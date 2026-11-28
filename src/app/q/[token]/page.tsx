@@ -3,7 +3,9 @@ import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { hashToken, isValidTokenFormat } from "@/lib/token";
+import { NoteShell } from "../note";
 import { FeedbackForm } from "./feedback-form";
+import { Greeting } from "./greeting";
 
 // Rendered per request: reads cookies / records a scan.
 export const instant = false;
@@ -31,10 +33,10 @@ export default async function QrPage({ params }: PageProps<"/q/[token]">) {
   const ua = (await headers()).get("user-agent") ?? "";
   if (BOT_UA.test(ua)) {
     return (
-      <main className="card">
-        <h1>Bir mesajın var</h1>
-        <p className="hint">Mesajını görmek için QR kodu telefonunla okut.</p>
-      </main>
+      <NoteShell>
+        <p className="note-text">Bir mesajın var.</p>
+        <p className="note-small">Görmek için QR kodu telefonunla okut.</p>
+      </NoteShell>
     );
   }
 
@@ -46,26 +48,28 @@ export default async function QrPage({ params }: PageProps<"/q/[token]">) {
 
   if (result.status === "empty") {
     return (
-      <main className="card">
-        <h1>Şimdilik mesaj yok</h1>
-        <p className="hint">Yeni mesajlar çok yakında eklenecek.</p>
-      </main>
+      <NoteShell>
+        <p className="note-text">Şimdilik yeni bir not yok.</p>
+        <p className="note-small">Yeni notlar yakında eklenecek, birazdan tekrar okut.</p>
+      </NoteShell>
     );
   }
 
   return (
-    <div className="qr-page">
-      <main className="card">
-        <blockquote className="quote">
-          <p>“{result.message_text}”</p>
-          {result.author && <footer>— {result.author}</footer>}
-        </blockquote>
-        {result.is_new_round && (
-          <p className="hint">Tüm mesajları gördün; şimdi yeni bir tura başladın.</p>
-        )}
-        <p className="hint">Bir sonraki okutmanda yeni bir mesaj seni bekliyor.</p>
-      </main>
-      <FeedbackForm token={token} />
-    </div>
+    <NoteShell
+      above={<Greeting />}
+      below={
+        <div className="note-after">
+          {result.is_new_round && <p>Tüm notları gördün, şimdi baştan başlıyoruz.</p>}
+          <p>Bir dahaki okutmada yeni bir not seni bekliyor.</p>
+          <FeedbackForm token={token} />
+        </div>
+      }
+    >
+      <blockquote>
+        <p className="note-text">{result.message_text}</p>
+        {result.author && <footer className="note-sign">{result.author}</footer>}
+      </blockquote>
+    </NoteShell>
   );
 }

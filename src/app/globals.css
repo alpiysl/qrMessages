@@ -73,23 +73,65 @@ h1 { font-size: 1.5rem; }
 
 .hint { color: var(--muted); font-size: 0.95rem; }
 
-.qr-page { width: 100%; max-width: 520px; display: flex; flex-direction: column; align-items: center; gap: 20px; }
-.feedback-trigger { background: transparent; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 8px 18px; font-size: 0.9rem; }
-.feedback-trigger:hover { color: var(--fg); }
-p.feedback-trigger { border-color: transparent; }
+/* Message page: handwritten note on a warm wall */
+body:has(.note-page) {
+  --desk: #eed8ca; --desk-deep: #e5c7b6; --paper: #fffbf4; --rule: #eadccf; --ink: #33293d;
+  --tape: rgb(241 184 74 / 0.78); --soft: #8c7a80;
+  background: radial-gradient(120% 80% at 50% 0%, #f6e6da 0%, var(--desk) 55%, var(--desk-deep) 100%) fixed;
+  color: var(--ink);
+}
+@media (prefers-color-scheme: dark) {
+  body:has(.note-page) {
+    --desk: #2b2430; --desk-deep: #211b25; --paper: #efe4d4; --rule: #ddcdb9; --soft: #b9a9b4;
+    background: radial-gradient(120% 80% at 50% 0%, #3a3040 0%, var(--desk) 55%, var(--desk-deep) 100%) fixed;
+  }
+}
+.note-page {
+  width: 100%; max-width: 440px; min-height: calc(100dvh - 48px);
+  display: flex; flex-direction: column; justify-content: center; gap: 22px; padding-bottom: 6vh;
+  font-family: var(--font-note), Georgia, serif;
+}
+.note-greeting { min-height: 1.6em; font-family: var(--font-hand), cursive; font-size: 1.6rem; color: var(--soft); padding-left: 6px; }
+.note {
+  position: relative; background-color: var(--paper); color: var(--ink);
+  background-image: repeating-linear-gradient(to bottom, transparent 0, transparent calc(2.1rem - 1px), var(--rule) calc(2.1rem - 1px), var(--rule) 2.1rem);
+  background-position: 0 2.4rem;
+  padding: 2.4rem 1.6rem 1.8rem; border-radius: 3px 3px 6px 4px; transform: rotate(-1.2deg);
+  box-shadow: 0 1px 1px rgb(60 30 40 / 0.08), 0 14px 28px -10px rgb(60 30 40 / 0.28);
+  animation: note-drop 0.7s cubic-bezier(.2,.9,.3,1.15) both;
+}
+.note-tape {
+  position: absolute; top: -12px; left: 50%; width: 92px; height: 26px; transform: translateX(-50%) rotate(3deg);
+  background: var(--tape); clip-path: polygon(3% 0, 97% 4%, 100% 100%, 0 94%);
+}
+.note blockquote { margin: 0; }
+.note-text { font-size: 1.35rem; line-height: 2.1rem; font-weight: 450; text-wrap: pretty; }
+.note-small { font-family: system-ui, sans-serif; font-size: 0.95rem; line-height: 2.1rem; color: #7a6a70; }
+.note-sign { font-family: var(--font-hand), cursive; font-size: 1.75rem; line-height: 2.1rem; text-align: right; color: #5b3f6b; }
+.note-after { display: flex; flex-direction: column; align-items: center; gap: 14px; text-align: center; font-family: system-ui, sans-serif; font-size: 0.95rem; color: var(--soft); }
+.feedback-trigger {
+  margin-top: 4px; background: transparent; color: var(--ink); border: 1.5px solid currentColor; border-radius: 999px; padding: 9px 20px; font-size: 0.95rem;
+}
+@media (prefers-color-scheme: dark) { .feedback-trigger { color: var(--paper); } }
+.feedback-trigger:focus-visible, .sheet button:focus-visible { outline: 2px solid #f1b84a; outline-offset: 2px; }
+p.feedback-trigger { border-color: transparent; color: var(--soft); }
 .sheet {
-  margin: auto auto 0; width: 100%; max-width: 520px; max-height: 90vh; border: 1px solid var(--border); border-bottom: none;
-  border-radius: 20px 20px 0 0; background: var(--card); color: var(--fg); padding: 0;
+  margin: auto auto 0; width: 100%; max-width: 520px; max-height: 90vh; border: none;
+  border-radius: 18px 18px 0 0; background: var(--paper); color: var(--ink); padding: 0; font-family: system-ui, sans-serif;
 }
 .sheet[open] { animation: sheet-up 0.22s ease-out; }
-.sheet::backdrop { background: rgb(0 0 0 / 0.45); }
+.sheet::backdrop { background: rgb(33 20 35 / 0.45); }
 .sheet-body { padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); display: flex; flex-direction: column; gap: 12px; }
 .sheet-head { display: flex; justify-content: space-between; align-items: center; }
-.sheet-head h2 { font-size: 1.1rem; }
-.sheet-close { background: transparent; color: var(--muted); padding: 4px 8px; font-size: 1rem; }
+.sheet-head h2 { font-family: var(--font-hand), cursive; font-size: 1.7rem; font-weight: 600; }
+.sheet-close { background: transparent; color: var(--ink); padding: 4px 8px; font-size: 1rem; }
 .sheet form { display: flex; flex-direction: column; gap: 10px; }
+.sheet textarea { background: #fff; color: var(--ink); border-color: var(--rule); }
+.sheet button[type="submit"] { background: var(--ink); color: var(--paper); }
+.sheet .feedback-done { color: var(--ink); }
 @keyframes sheet-up { from { transform: translateY(100%); } to { transform: none; } }
-@media (prefers-reduced-motion: reduce) { .sheet[open] { animation: none; } }
+@keyframes note-drop { from { opacity: 0; transform: translateY(-24px) rotate(2deg); } to { opacity: 1; transform: rotate(-1.2deg); } }
+@media (prefers-reduced-motion: reduce) { .sheet[open], .note { animation: none; } }
 
 textarea, input[type="text"], input[type="password"] {
   width: 100%;
